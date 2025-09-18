@@ -5,61 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .login-container {
-            background-color: #fff;
-            padding: 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        button.login-btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        button.login-btn:hover {
-            background-color: #45a049;
-        }
+        /* Seu estilo aqui... */
     </style>
 </head>
 <body>
@@ -85,27 +31,30 @@
     </div>
 
     <script>
-        // Função que valida o login
+        // Função para fazer a requisição ao backend Flask
+        function iniciar() {
+            fetch('https://script-onlineoi.onrender.com/start-automation') // Altere para o seu URL no Render
+                .then(response => response.json())
+                .then(data => {
+                    alert("Resultado da automação: " + data.title);
+                })
+                .catch(error => console.error('Erro:', error));
+        }
+
+        // Função de login simples
         document.getElementById('login-form').addEventListener('submit', function(event) {
-            event.preventDefault(); // Impede o envio do formulário
+            event.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             
             if(username === 'admin' && password === '12345') {
-                // Se o login for correto, mostra a próxima página
                 document.getElementById('login-container').style.display = 'none';
                 document.getElementById('iniciar-container').style.display = 'block';
             } else {
                 alert('Usuário ou senha incorretos!');
             }
         });
-
-        // Função para o botão INICIAR
-        function iniciar() {
-            alert('O sistema foi iniciado!');
-            // Aqui você pode adicionar o código para iniciar a funcionalidade desejada
-        }
     </script>
 
 </body>
