@@ -3,8 +3,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import time
+from flask_cors import CORS  # Importe o CORS
 
 app = Flask(__name__)
+
+# Habilitar CORS para todas as rotas
+CORS(app, resources={r"/*": {"origins": "*"}})  # Permite qualquer origem
 
 @app.route('/start-automation', methods=['GET'])
 def start_automation():
