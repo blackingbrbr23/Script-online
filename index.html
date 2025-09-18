@@ -63,9 +63,10 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+
+    <div class="login-container" id="login-container">
         <h2>Login</h2>
-        <form action="#" method="POST">
+        <form id="login-form">
             <div class="input-group">
                 <label for="username">Usuário</label>
                 <input type="text" id="username" name="username" required>
@@ -77,5 +78,35 @@
             <button type="submit" class="login-btn">Entrar</button>
         </form>
     </div>
+
+    <div class="login-container" id="iniciar-container" style="display:none;">
+        <h2>Bem-vindo, você está logado!</h2>
+        <button class="login-btn" onclick="iniciar()">INICIAR</button>
+    </div>
+
+    <script>
+        // Função que valida o login
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Impede o envio do formulário
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if(username === 'admin' && password === '12345') {
+                // Se o login for correto, mostra a próxima página
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('iniciar-container').style.display = 'block';
+            } else {
+                alert('Usuário ou senha incorretos!');
+            }
+        });
+
+        // Função para o botão INICIAR
+        function iniciar() {
+            alert('O sistema foi iniciado!');
+            // Aqui você pode adicionar o código para iniciar a funcionalidade desejada
+        }
+    </script>
+
 </body>
 </html>
