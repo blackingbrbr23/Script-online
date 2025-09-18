@@ -1,2 +1,4 @@
 Flask
 selenium
+pip install flask-cors
+
