@@ -1,54 +1,177 @@
 import os
-from flask import Flask, request, render_template
-import requests
-from bs4 import BeautifulSoup
+import sqlite3
+from flask import Flask, request, jsonify, g, send_from_directory, render_template_string
+from werkzeug.utils import secure_filename
+from datetime import datetime
 
-# Indica para o Flask procurar os templates na raiz
-app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__)))
+DATABASE = 'server.db'
+UPLOADS_DIR = 'uploads'
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 
-# ---------------------------------------------
-# Função para coletar links do Google Maps
-# ---------------------------------------------
-def buscar_links_google_maps(palavra_chave):
-    url = f"https://www.google.com/maps/search/{palavra_chave.replace(' ', '+')}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        r.raise_for_status()
-    except Exception as e:
-        print(f"Erro ao acessar o Google Maps: {e}")
-        return []
+app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 
-    soup = BeautifulSoup(r.text, 'html.parser')
-    links = set(a['href'] for a in soup.find_all('a', href=True) if 'maps/place' in a['href'])
-    return list(links)
+ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN', 'troque_isto_por_um_token_seguro')
 
-# ---------------------------------------------
-# Rota principal
-# ---------------------------------------------
+# --- DB helpers ---
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
+
+def init_db():
+    db = get_db()
+    db.executescript("""
+    CREATE TABLE IF NOT EXISTS clients (
+        mac TEXT PRIMARY KEY,
+        name TEXT,
+        public_ip TEXT,
+        last_seen TEXT,
+        command TEXT
+    );
+    CREATE TABLE IF NOT EXISTS results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        mac TEXT,
+        filename TEXT,
+        uploaded_at TEXT
+    );
+    """)
+    db.commit()
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+# --- Endpoints ---
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json(force=True)
+    mac = data.get('mac')
+    name = data.get('name', '')
+    public_ip = data.get('public_ip', '')
+    if not mac:
+        return jsonify({'error': 'mac required'}), 400
+    db = get_db()
+    now = datetime.utcnow().isoformat()
+    db.execute("INSERT OR REPLACE INTO clients (mac, name, public_ip, last_seen, command) VALUES (?,?,?,?,COALESCE((SELECT command FROM clients WHERE mac=?), ''))",
+               (mac, name, public_ip, now, mac))
+    db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/get_command', methods=['GET'])
+def get_command():
+    mac = request.args.get('mac')
+    if not mac:
+        return jsonify({'error': 'mac required'}), 400
+    db = get_db()
+    cur = db.execute("SELECT command FROM clients WHERE mac=?", (mac,))
+    row = cur.fetchone()
+    command = row['command'] if row else ''
+    if command:
+        db.execute("UPDATE clients SET command='' , last_seen=? WHERE mac=?", (datetime.utcnow().isoformat(), mac))
+        db.commit()
+    return jsonify({'command': command or ''})
+
+@app.route('/set_command', methods=['POST'])
+def set_command():
+    token = request.headers.get('X-ADMIN-TOKEN')
+    if token != ADMIN_TOKEN:
+        return jsonify({'error': 'unauthorized'}), 401
+    data = request.get_json(force=True)
+    mac = data.get('mac')
+    command = data.get('command', '')
+    if not mac:
+        return jsonify({'error': 'mac required'}), 400
+    db = get_db()
+    db.execute("UPDATE clients SET command=? WHERE mac=?", (command, mac))
+    db.commit()
+    return jsonify({'ok': True})
+
+@app.route('/upload_results', methods=['POST'])
+def upload_results():
+    mac = request.form.get('mac')
+    if 'file' not in request.files or not mac:
+        return jsonify({'error': 'file and mac required'}), 400
+    f = request.files['file']
+    filename = secure_filename(f.filename)
+    save_to = os.path.join(UPLOADS_DIR, f"{mac}__{datetime.utcnow().strftime('%Y%m%d%H%M%S')}__{filename}")
+    f.save(save_to)
+    db = get_db()
+    db.execute("INSERT INTO results (mac, filename, uploaded_at) VALUES (?,?,?)", (mac, save_to, datetime.utcnow().isoformat()))
+    db.execute("UPDATE clients SET last_seen=? WHERE mac=?", (datetime.utcnow().isoformat(), mac))
+    db.commit()
+    return jsonify({'ok': True})
+
+# --- Dashboard ---
+DASH_TEMPLATE = """
+<!doctype html>
+<title>Painel de Clientes</title>
+<h1>Clientes</h1>
+<table border=1 cellpadding=8>
+<tr><th>MAC</th><th>Nome</th><th>IP Público</th><th>Último seen (UTC)</th><th>Ações</th></tr>
+{% for c in clients %}
+<tr>
+<td>{{c.mac}}</td>
+<td>{{c.name}}</td>
+<td>{{c.public_ip}}</td>
+<td>{{c.last_seen}}</td>
+<td>
+<form method="post" action="/set_command" onsubmit="sendCommand(event, '{{c.mac}}')">
+<button type="submit">SCANEAR</button>
+</form>
+<a href="/results/{{c.mac}}">Ver resultados</a>
+</td>
+</tr>
+{% endfor %}
+</table>
+<script>
+async function sendCommand(e, mac){
+    e.preventDefault();
+    const token = prompt("Admin Token:");
+    const resp = await fetch('/set_command', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-ADMIN-TOKEN':token},
+        body: JSON.stringify({mac: mac, command:'SCAN'})
+    });
+    alert(await resp.text());
+    location.reload();
+}
+</script>
+"""
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    db = get_db()
+    cur = db.execute("SELECT mac, name, public_ip, last_seen FROM clients ORDER BY last_seen DESC")
+    clients = cur.fetchall()
+    return render_template_string(DASH_TEMPLATE, clients=clients)
 
-# ---------------------------------------------
-# Rota de coletas
-# ---------------------------------------------
-@app.route('/coletar', methods=['POST'])
-def coletar():
-    palavra_chave = request.form.get('palavra_chave', '').strip()
-    if not palavra_chave:
-        return render_template('result.html', links=[], error="Nenhuma palavra-chave fornecida.")
+@app.route('/results/<mac>')
+def results(mac):
+    db = get_db()
+    cur = db.execute("SELECT filename, uploaded_at FROM results WHERE mac=? ORDER BY uploaded_at DESC", (mac,))
+    rows = cur.fetchall()
+    out = "<h1>Resultados para {}</h1><ul>".format(mac)
+    for r in rows:
+        out += f"<li>{r['uploaded_at']} - <a href='/download?file={r['filename']}'>Download</a></li>"
+    out += "</ul><a href='/'>Voltar</a>"
+    return out
 
-    links = buscar_links_google_maps(palavra_chave)
-    if not links:
-        return render_template('result.html', links=[], error="Nenhum link encontrado.")
+@app.route('/download')
+def download():
+    path = request.args.get('file')
+    if not path or not os.path.exists(path):
+        return "Arquivo não encontrado", 404
+    directory = os.path.dirname(path)
+    filename = os.path.basename(path)
+    return send_from_directory(directory, filename, as_attachment=True)
 
-    return render_template('result.html', links=links, error=None)
-
-# ---------------------------------------------
-# Executar o app
-# ---------------------------------------------
+# --- start ---
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    with app.app_context():
+        init_db()
+    app.run(host='0.0.0.0', port=5000)
