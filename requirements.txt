@@ -1,3 +1,4 @@
-Flask==2.3.6
-beautifulsoup4==4.12.2
-requests==2.31.0
+Flask
+requests
+beautifulsoup4
+gunicorn
