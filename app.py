@@ -3,7 +3,7 @@ from flask import Flask, request, render_template
 import requests
 from bs4 import BeautifulSoup
 
-# Flask configurado para procurar templates na raiz
+# Indica para o Flask procurar os templates na raiz
 app = Flask(__name__, template_folder=os.path.dirname(os.path.abspath(__file__)))
 
 # ---------------------------------------------
@@ -44,11 +44,11 @@ def coletar():
     links = buscar_links_google_maps(palavra_chave)
     if not links:
         return render_template('result.html', links=[], error="Nenhum link encontrado.")
+
     return render_template('result.html', links=links, error=None)
 
 # ---------------------------------------------
 # Executar o app
 # ---------------------------------------------
 if __name__ == '__main__':
-    # Use host=0.0.0.0 para que seja acessível no Render
     app.run(host='0.0.0.0', port=5000, debug=True)
