@@ -7,7 +7,6 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from webdriver_manager.firefox import GeckoDriverManager
 
 # ---------------------------------------------
 # Configurações Flask
@@ -72,7 +71,8 @@ def run_selenium_collect(keywords, progress_cb=None):
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--disable-gpu')
 
-    service = Service(GeckoDriverManager().install())
+    # Usar geckodriver fixo instalado no container
+    service = Service('/usr/local/bin/geckodriver')
     driver = webdriver.Firefox(service=service, options=options)
     driver.get("https://www.google.com/maps/@-16.4932735,-39.3111171,12z?hl=pt-BR")
     time.sleep(5)
@@ -105,7 +105,6 @@ def coletar():
     if not keywords:
         return redirect(url_for('index'))
 
-    # Execução síncrona (atenção: pode demorar)
     result = run_selenium_collect(keywords)
     return render_template('result.html', result=result)
 
@@ -119,5 +118,4 @@ def download():
 # Ponto de entrada
 # ---------------------------------------------
 if __name__ == '__main__':
-    # Para testes locais
     app.run(host='0.0.0.0', port=5000, debug=True)
