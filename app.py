@@ -33,7 +33,7 @@ def index():
     return render_template('index.html')
 
 # ---------------------------------------------
-# Rota de coleta
+# Rota de coletas
 # ---------------------------------------------
 @app.route('/coletar', methods=['POST'])
 def coletar():
