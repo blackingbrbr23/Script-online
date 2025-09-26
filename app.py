@@ -9,22 +9,28 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.firefox import GeckoDriverManager
 
-# Definir pasta de templates como a raiz do projeto
+# ---------------------------------------------
+# Configurações Flask
+# ---------------------------------------------
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__, template_folder=BASE_DIR)
 
-# Pasta para salvar links
+# ---------------------------------------------
+# Diretórios e arquivos
+# ---------------------------------------------
 DADOS_DIR = os.path.join(BASE_DIR, 'dados')
 os.makedirs(DADOS_DIR, exist_ok=True)
 LINKS_FILE = os.path.join(DADOS_DIR, 'links.txt')
 
+# ---------------------------------------------
+# Logging
+# ---------------------------------------------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# -------------------------------
-# Funções auxiliares
-# -------------------------------
+# ---------------------------------------------
+# Funções Selenium
+# ---------------------------------------------
 def coletar_links_por_busca(busca, driver, logger_fn=print):
     logger_fn(f"🔍 Buscando: {busca}")
     campo = driver.find_element(By.ID, 'searchboxinput')
@@ -47,7 +53,6 @@ def coletar_links_por_busca(busca, driver, logger_fn=print):
     links = {p.get_attribute('href') for p in perfis if p.get_attribute('href')}
     return links
 
-
 def save_new_links(new_links):
     existing = set()
     if os.path.exists(LINKS_FILE):
@@ -60,12 +65,12 @@ def save_new_links(new_links):
                 f.write(link + '\n')
     return len(to_add), len(existing | new_links)
 
-
 def run_selenium_collect(keywords, progress_cb=None):
     options = Options()
     options.headless = True
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
 
     service = Service(GeckoDriverManager().install())
     driver = webdriver.Firefox(service=service, options=options)
@@ -86,14 +91,12 @@ def run_selenium_collect(keywords, progress_cb=None):
         progress_cb(f"Adicionados {added} links. Total: {total}")
     return {'added': added, 'total': total, 'found': len(all_links)}
 
-
-# -------------------------------
+# ---------------------------------------------
 # Rotas Flask
-# -------------------------------
+# ---------------------------------------------
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
-
 
 @app.route('/coletar', methods=['POST'])
 def coletar():
@@ -102,10 +105,9 @@ def coletar():
     if not keywords:
         return redirect(url_for('index'))
 
-    # Execução síncrona — atenção: pode demorar
+    # Execução síncrona (atenção: pode demorar)
     result = run_selenium_collect(keywords)
     return render_template('result.html', result=result)
-
 
 @app.route('/download')
 def download():
@@ -113,6 +115,9 @@ def download():
         return send_file(LINKS_FILE, as_attachment=True)
     return "Arquivo não encontrado", 404
 
-
+# ---------------------------------------------
+# Ponto de entrada
+# ---------------------------------------------
 if __name__ == '__main__':
+    # Para testes locais
     app.run(host='0.0.0.0', port=5000, debug=True)
