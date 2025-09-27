@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Página Vazia</title>
+    <meta charset="UTF-8">
+    <title>Página Inicial</title>
 </head>
 <body>
     <h1>Texto do Painel:</h1>
     <p id="textoPainel">Aqui aparecerá o texto digitado no painel.</p>
 
     <script>
-        // Pega o texto salvo no sessionStorage ou localStorage
-        const texto = sessionStorage.getItem('painelTexto');
-        if(texto) {
+        // Pega o texto salvo no localStorage
+        const texto = localStorage.getItem('painelTexto');
+        if (texto) {
             document.getElementById('textoPainel').innerText = texto;
         }
     </script>
