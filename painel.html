@@ -24,16 +24,24 @@
   <button id="sair">Sair</button>
 
   <script>
+    // Envia o texto para index.html
     document.getElementById('enviar').addEventListener('click', function() {
         const texto = document.getElementById('texto').value;
-        sessionStorage.setItem('painelTexto', texto); // salva no sessionStorage
+        localStorage.setItem('painelTexto', texto); // <- usa localStorage para persistência
         alert('Texto salvo! Vá para a index.html para ver.');
     });
 
+    // Logout
     document.getElementById('sair').addEventListener('click', function() {
-      sessionStorage.removeItem('logado'); // remove sessão
-      location.href = 'login.html'; // volta para login
+      sessionStorage.removeItem('logado'); // remove login
+      location.href = 'login.html';
     });
+
+    // Se já tiver um texto salvo, mostra no input
+    const textoSalvo = localStorage.getItem('painelTexto');
+    if (textoSalvo) {
+        document.getElementById('texto').value = textoSalvo;
+    }
   </script>
 </body>
 </html>
