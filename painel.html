@@ -4,6 +4,32 @@
     <meta charset="UTF-8">
     <title>Painel</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+    <style>
+        /* Estilo simples para a janela de erro */
+        #erroModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #erroModal .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+            text-align: center;
+        }
+
+        #erroModal button {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <script>
@@ -20,6 +46,15 @@
     <br><br>
     <button id="sair">Sair</button>
 
+    <!-- Janela de erro -->
+    <div id="erroModal">
+        <div class="modal-content">
+            <h3>Erro</h3>
+            <p id="erroMensagem">Ocorreu um erro!</p>
+            <button onclick="document.getElementById('erroModal').style.display='none'">Fechar</button>
+        </div>
+    </div>
+
     <script>
         const supabaseUrl = 'https://uczjqfezherhudrrznti.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
@@ -34,13 +69,13 @@
             const atualizado_em = new Date().toISOString();
 
             // Insere o novo texto com a data de atualização
-            const { error } = await supabase.from('painel_texto').insert([{
+            const { data, error } = await supabase.from('painel_texto').insert([{
                 texto,
                 atualizado_em
             }]);
 
             if(error){
-                alert('Erro ao enviar: ' + error.message);
+                exibirErro('Erro ao enviar: ' + error.message);
             } else {
                 alert('Texto enviado com sucesso!');
                 // Atualiza a página para refletir a inserção
@@ -50,13 +85,17 @@
 
         // Carregar último texto no input
         async function carregarTexto(){
-            const { data } = await supabase.from('painel_texto')
+            const { data, error } = await supabase.from('painel_texto')
                 .select('*')
                 .order('atualizado_em', {ascending:false})
                 .limit(1);
 
-            if(data && data.length>0){
+            if(error){
+                exibirErro('Erro ao carregar dados: ' + error.message);
+            } else if(data && data.length > 0){
                 document.getElementById('texto').value = data[0].texto;
+            } else {
+                document.getElementById('texto').value = 'Nenhum texto encontrado.';
             }
         }
         carregarTexto();
@@ -66,6 +105,12 @@
             sessionStorage.removeItem('logado');
             location.href = 'login.html';
         });
+
+        // Função para exibir o erro na tela
+        function exibirErro(mensagem){
+            document.getElementById('erroMensagem').innerText = mensagem;
+            document.getElementById('erroModal').style.display = 'flex';
+        }
     </script>
 </body>
 </html>
