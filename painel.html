@@ -56,12 +56,12 @@
     </div>
 
     <script>
-        // Inicializando o cliente Supabase depois que a biblioteca é carregada
+        // Defina a URL e a chave do seu Supabase
         const supabaseUrl = 'https://uczjqfezherhudrrznti.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
-        
-        // Corrigido aqui: declarando a variável supabase corretamente
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Inicializar o cliente Supabase (agora corretamente após a inclusão do script)
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // Enviar texto
         document.getElementById('enviar').addEventListener('click', async function(){
