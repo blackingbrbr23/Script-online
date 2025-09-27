@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Painel</title>
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 </head>
 <body>
   <script>
-    if (sessionStorage.getItem('logado') !== '1') {
+    if(sessionStorage.getItem('logado') !== '1'){
       alert('Acesso negado! Faça login.');
       location.href = 'login.html';
     }
@@ -25,32 +24,32 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
     const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Enviar texto para o Supabase
-    document.getElementById('enviar').addEventListener('click', async function() {
+    // Enviar texto
+    document.getElementById('enviar').addEventListener('click', async function(){
       const texto = document.getElementById('texto').value;
+      if(!texto) return alert('Digite algum texto!');
 
-      // Deleta registros antigos e insere novo
-      await supabase.from('painel_texto').delete().neq('id', 0);
-      const { data, error } = await supabase.from('painel_texto').insert([{ texto }]);
-
-      if(error) {
-        alert('Erro: ' + error.message);
+      // Insere o novo texto
+      const { error } = await supabase.from('painel_texto').insert([{ texto }]);
+      if(error){
+        alert('Erro ao enviar: ' + error.message);
       } else {
-        alert('Texto enviado para o site!');
+        alert('Texto enviado com sucesso!');
       }
     });
 
-    // Mostrar texto atual no input
-    async function carregarTexto() {
-      const { data } = await supabase.from('painel_texto').select('*').order('id', {ascending: false}).limit(1);
-      if(data && data.length > 0){
+    // Carregar último texto no input
+    async function carregarTexto(){
+      const { data } = await supabase.from('painel_texto')
+        .select('*').order('atualizado_em', {ascending:false}).limit(1);
+      if(data && data.length>0){
         document.getElementById('texto').value = data[0].texto;
       }
     }
     carregarTexto();
 
-    // Logout
-    document.getElementById('sair').addEventListener('click', function() {
+    // Sair
+    document.getElementById('sair').addEventListener('click', function(){
       sessionStorage.removeItem('logado');
       location.href = 'login.html';
     });
