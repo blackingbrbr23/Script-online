@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel</title>
+</head>
+<body>
+  <script>
+    // Verifica se o usuário está logado
+    if (sessionStorage.getItem('logado') !== '1') {
+      alert('Acesso negado! Faça login.');
+      location.href = 'login.html';
+    }
+  </script>
+
+  <h1>Bem-vindo ao Painel</h1>
+  <p>Conteúdo protegido aqui.</p>
+
+  <button id="sair">Sair</button>
+  <script>
+    document.getElementById('sair').addEventListener('click', function() {
+      sessionStorage.removeItem('logado'); // remove sessão
+      location.href = 'login.html'; // volta para login
+    });
+  </script>
+</body>
+</html>
