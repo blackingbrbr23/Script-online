@@ -37,14 +37,8 @@
         const supabaseUrl = 'https://uczjqfezherhudrrznti.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
 
-        // Corrigido: inicializando o cliente supabase corretamente
+        // Inicializando o cliente supabase corretamente, após a inclusão do script
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        // Verificar se o usuário está logado
-        if(sessionStorage.getItem('logado') !== '1'){
-            alert('Acesso negado! Faça login.');
-            location.href = 'login.html';
-        }
     </script>
 
     <h1>Painel</h1>
@@ -63,6 +57,12 @@
     </div>
 
     <script>
+        // Verificar se o usuário está logado
+        if(sessionStorage.getItem('logado') !== '1'){
+            alert('Acesso negado! Faça login.');
+            location.href = 'login.html';
+        }
+
         // Enviar texto
         document.getElementById('enviar').addEventListener('click', async function(){
             const texto = document.getElementById('texto').value;
