@@ -32,15 +32,6 @@
     </style>
 </head>
 <body>
-    <script>
-        // Defina a URL e a chave do seu Supabase
-        const supabaseUrl = 'https://uczjqfezherhudrrznti.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
-
-        // Inicializando o cliente supabase corretamente, após a inclusão do script
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-    </script>
-
     <h1>Painel</h1>
     <input type="text" id="texto" placeholder="Digite algo aqui">
     <button id="enviar">Enviar</button>
@@ -57,62 +48,75 @@
     </div>
 
     <script>
-        // Verificar se o usuário está logado
-        if(sessionStorage.getItem('logado') !== '1'){
-            alert('Acesso negado! Faça login.');
-            location.href = 'login.html';
-        }
+        // Defina a URL e a chave do seu Supabase
+        const supabaseUrl = 'https://uczjqfezherhudrrznti.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
 
-        // Enviar texto
-        document.getElementById('enviar').addEventListener('click', async function(){
-            const texto = document.getElementById('texto').value;
-            if(!texto) return alert('Digite algum texto!');
+        // Inicializar o cliente supabase corretamente (depois que o script for carregado)
+        let supabase;
 
-            // Adiciona a data de atualização
-            const atualizado_em = new Date().toISOString();
+        // Aguardar a biblioteca Supabase ser carregada
+        window.onload = function() {
+            supabase = Supabase.createClient(supabaseUrl, supabaseKey); // Certificando-se de que o supabase é inicializado após o carregamento
 
-            // Insere o novo texto com a data de atualização
-            const { data, error } = await supabase.from('painel_texto').insert([{
-                texto,
-                atualizado_em
-            }]);
-
-            if(error){
-                exibirErro('Erro ao enviar: ' + error.message);
-            } else {
-                alert('Texto enviado com sucesso!');
-                // Atualiza a página para refletir a inserção
-                carregarTexto();
+            // Agora é seguro utilizar supabase
+            // Verificar se o usuário está logado
+            if(sessionStorage.getItem('logado') !== '1'){
+                alert('Acesso negado! Faça login.');
+                location.href = 'login.html';
             }
-        });
 
-        // Carregar último texto no input
-        async function carregarTexto(){
-            const { data, error } = await supabase.from('painel_texto')
-                .select('*')
-                .order('atualizado_em', {ascending:false})
-                .limit(1);
+            // Enviar texto
+            document.getElementById('enviar').addEventListener('click', async function(){
+                const texto = document.getElementById('texto').value;
+                if(!texto) return alert('Digite algum texto!');
 
-            if(error){
-                exibirErro('Erro ao carregar dados: ' + error.message);
-            } else if(data && data.length > 0){
-                document.getElementById('texto').value = data[0].texto;
-            } else {
-                document.getElementById('texto').value = 'Nenhum texto encontrado.';
+                // Adiciona a data de atualização
+                const atualizado_em = new Date().toISOString();
+
+                // Insere o novo texto com a data de atualização
+                const { data, error } = await supabase.from('painel_texto').insert([{
+                    texto,
+                    atualizado_em
+                }]);
+
+                if(error){
+                    exibirErro('Erro ao enviar: ' + error.message);
+                } else {
+                    alert('Texto enviado com sucesso!');
+                    // Atualiza a página para refletir a inserção
+                    carregarTexto();
+                }
+            });
+
+            // Carregar último texto no input
+            async function carregarTexto(){
+                const { data, error } = await supabase.from('painel_texto')
+                    .select('*')
+                    .order('atualizado_em', {ascending:false})
+                    .limit(1);
+
+                if(error){
+                    exibirErro('Erro ao carregar dados: ' + error.message);
+                } else if(data && data.length > 0){
+                    document.getElementById('texto').value = data[0].texto;
+                } else {
+                    document.getElementById('texto').value = 'Nenhum texto encontrado.';
+                }
             }
-        }
-        carregarTexto();
+            carregarTexto();
 
-        // Sair
-        document.getElementById('sair').addEventListener('click', function(){
-            sessionStorage.removeItem('logado');
-            location.href = 'login.html';
-        });
+            // Sair
+            document.getElementById('sair').addEventListener('click', function(){
+                sessionStorage.removeItem('logado');
+                location.href = 'login.html';
+            });
 
-        // Função para exibir o erro na tela
-        function exibirErro(mensagem){
-            document.getElementById('erroMensagem').innerText = mensagem;
-            document.getElementById('erroModal').style.display = 'flex';
+            // Função para exibir o erro na tela
+            function exibirErro(mensagem){
+                document.getElementById('erroMensagem').innerText = mensagem;
+                document.getElementById('erroModal').style.display = 'flex';
+            }
         }
     </script>
 </body>
