@@ -13,15 +13,20 @@
   </form>
 
   <script>
+    // Valores ofuscados em Base64 (EXEMPLO: 'admin' => 'YWRtaW4=', '@Ww365888' => 'QFd3MzY1ODg4')
+    const userEnc = 'YWRtaW4=';
+    const passEnc = 'QFd3MzY1ODg4';
+
+    function dec(s){ try{ return atob(s); }catch(e){return ''; } }
+
     document.getElementById('loginForm').addEventListener('submit', function(e) {
-      e.preventDefault(); // impede envio normal do form
+      e.preventDefault();
       const usuario = document.getElementById('usuario').value;
       const senha = document.getElementById('senha').value;
 
-      // Credenciais fixas
-      if (usuario === 'admin' && senha === '1234') {
-        sessionStorage.setItem('logado', '1'); // marca como logado
-        location.href = 'painel.html'; // redireciona
+      if (usuario === dec(userEnc) && senha === dec(passEnc)) {
+        sessionStorage.setItem('logado','1');
+        location.href = 'painel.html';
       } else {
         alert('Usuário ou senha incorretos!');
       }
