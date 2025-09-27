@@ -43,6 +43,8 @@
                 alert('Erro ao enviar: ' + error.message);
             } else {
                 alert('Texto enviado com sucesso!');
+                // Atualiza a página para refletir a inserção
+                carregarTexto();
             }
         });
 
