@@ -16,8 +16,20 @@
   <h1>Bem-vindo ao Painel</h1>
   <p>Conteúdo protegido aqui.</p>
 
+  <label>Digite o texto para mostrar na index.html:</label><br>
+  <input type="text" id="texto" placeholder="Digite algo aqui">
+  <button id="enviar">Enviar</button>
+
+  <br><br>
   <button id="sair">Sair</button>
+
   <script>
+    document.getElementById('enviar').addEventListener('click', function() {
+        const texto = document.getElementById('texto').value;
+        sessionStorage.setItem('painelTexto', texto); // salva no sessionStorage
+        alert('Texto salvo! Vá para a index.html para ver.');
+    });
+
     document.getElementById('sair').addEventListener('click', function() {
       sessionStorage.removeItem('logado'); // remove sessão
       location.href = 'login.html'; // volta para login
