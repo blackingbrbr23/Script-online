@@ -3,45 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <title>Painel</title>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 </head>
 <body>
   <script>
-    // Verifica se o usuário está logado
     if (sessionStorage.getItem('logado') !== '1') {
       alert('Acesso negado! Faça login.');
       location.href = 'login.html';
     }
   </script>
 
-  <h1>Bem-vindo ao Painel</h1>
-  <p>Conteúdo protegido aqui.</p>
-
-  <label>Digite o texto para mostrar na index.html:</label><br>
+  <h1>Painel</h1>
   <input type="text" id="texto" placeholder="Digite algo aqui">
   <button id="enviar">Enviar</button>
-
   <br><br>
   <button id="sair">Sair</button>
 
   <script>
-    // Envia o texto para index.html
-    document.getElementById('enviar').addEventListener('click', function() {
-        const texto = document.getElementById('texto').value;
-        localStorage.setItem('painelTexto', texto); // <- usa localStorage para persistência
-        alert('Texto salvo! Vá para a index.html para ver.');
+    const supabaseUrl = 'https://uczjqfezherhudrrznti.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjempxZmV6aGVyaHVkcnJ6bnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5ODUwOTEsImV4cCI6MjA3NDU2MTA5MX0.snnWr64nQG0WTk4-BoqH-N8T0e9-xVV8eQiG_1Hxc98';
+    const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Enviar texto para o Supabase
+    document.getElementById('enviar').addEventListener('click', async function() {
+      const texto = document.getElementById('texto').value;
+
+      // Deleta registros antigos e insere novo
+      await supabase.from('painel_texto').delete().neq('id', 0);
+      const { data, error } = await supabase.from('painel_texto').insert([{ texto }]);
+
+      if(error) {
+        alert('Erro: ' + error.message);
+      } else {
+        alert('Texto enviado para o site!');
+      }
     });
+
+    // Mostrar texto atual no input
+    async function carregarTexto() {
+      const { data } = await supabase.from('painel_texto').select('*').order('id', {ascending: false}).limit(1);
+      if(data && data.length > 0){
+        document.getElementById('texto').value = data[0].texto;
+      }
+    }
+    carregarTexto();
 
     // Logout
     document.getElementById('sair').addEventListener('click', function() {
-      sessionStorage.removeItem('logado'); // remove login
+      sessionStorage.removeItem('logado');
       location.href = 'login.html';
     });
-
-    // Se já tiver um texto salvo, mostra no input
-    const textoSalvo = localStorage.getItem('painelTexto');
-    if (textoSalvo) {
-        document.getElementById('texto').value = textoSalvo;
-    }
   </script>
 </body>
 </html>
